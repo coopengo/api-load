@@ -1,0 +1,21 @@
+project_name: api-load
+release:
+  github:
+    owner: coopengo
+    name: api-load
+  name_template: '{{.Tag}}'
+builds:
+- goos:
+  - linux
+  - windows
+  goarch:
+  - amd64
+  main: .
+  ldflags: -s -w -X main.relVersion={{.Version}} -X main.relCommit={{.Commit}} -X main.relDate={{.Date}}
+  binary: api-load
+archive:
+  format: tar.gz
+  name_template: '{{ .Binary }}_{{ .Version }}_{{ .Os }}'
+checksum:
+  name_template: '{{ .ProjectName }}_{{ .Version }}_checksums.txt'
+dist: dist

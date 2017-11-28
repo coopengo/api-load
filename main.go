@@ -5,17 +5,36 @@ import (
 	"fmt"
 )
 
+var (
+	relDate, relVersion, relCommit string
+)
+
+func version() {
+	fmt.Printf("Date    : %s\n", relDate)
+	fmt.Printf("Version : %s\n", relVersion)
+	fmt.Printf("Commit  : %s\n", relCommit)
+}
+
 func main() {
-	// tech args
-	concurrency := flag.Uint("c", 4, "number of concurrent requests")
-	buffer := flag.Uint("b", 10, "buffer / channel size")
+	// version
+	v := flag.Bool("version", false, "print version informations")
+
 	// func args
 	auth := flag.String("auth", "cookie admin:admin@http://localhost:3000/auth/login", "api auth method")
 	url := flag.String("url", "http://localhost:3000/contract", "api url")
 	method := flag.String("method", "POST", "http method to process to api")
 	data := flag.String("data", "", "data file to process")
 
+	// tech args
+	concurrency := flag.Uint("c", 4, "number of concurrent requests")
+	buffer := flag.Uint("b", 10, "buffer / channel size")
+
 	flag.Parse()
+
+	if *v {
+		version()
+		return
+	}
 
 	if *data == "" {
 		flag.Usage()
