@@ -10,8 +10,9 @@ func main() {
 	concurrency := flag.Uint("c", 4, "number of concurrent requests")
 	buffer := flag.Uint("b", 10, "buffer / channel size")
 	// func args
-	url := flag.String("url", "http://localhost", "api url to target")
-	method := flag.String("method", "POST", "http method to process")
+	auth := flag.String("auth", "cookie admin:admin@http://localhost:3000/auth/login", "api auth method")
+	url := flag.String("url", "http://localhost:3000/contract", "api url")
+	method := flag.String("method", "POST", "http method to process to api")
 	data := flag.String("data", "", "data file to process")
 
 	flag.Parse()
@@ -21,6 +22,9 @@ func main() {
 		return
 	}
 
+	temp := &job{}
+	authenticate(*auth, temp)
+
 	in := make(chan job, *buffer**concurrency)
 	out := make(chan job, *buffer**concurrency)
 
@@ -28,7 +32,7 @@ func main() {
 		go worker(in, out)
 	}
 
-	go prepare(in, *url, *method, *data)
+	go prepare(in, temp, *url, *method, *data)
 
 	done := uint(0)
 	for {

@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 )
 
-func prepare(in chan job, url string, method string, data string) {
+func prepare(in chan job, temp *job, url string, method string, data string) {
 	b, err := ioutil.ReadFile(data)
 	if err != nil {
 		panic(err)
@@ -17,7 +17,7 @@ func prepare(in chan job, url string, method string, data string) {
 		if err != nil {
 			panic(err)
 		}
-		in <- job{id: i + 1, url: url, method: method, req: j}
+		in <- job{cookies: temp.cookies, id: i + 1, url: url, method: method, req: j}
 	}
 	close(in)
 }

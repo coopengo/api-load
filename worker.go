@@ -14,7 +14,10 @@ func do(j job, out chan job) {
 		out <- j
 	}()
 	req, err := http.NewRequest(j.method, j.url, bytes.NewReader(j.req))
-	req.Header["Content-Type"] = []string{"application/json"}
+	req.Header.Add("Content-Type", "application/json")
+	for _, cookie := range j.cookies {
+		req.AddCookie(cookie)
+	}
 	if err != nil {
 		j.err = err.Error()
 		return
