@@ -1,6 +1,6 @@
 ## API Load
 
-!!! This is still a work in progress !!!
+:warning: This is still a work in progress :warning:
 
 `api-load` is a small tool to pipe massive data via API calls. It will try to minimize memory buffering in order to scale (not a priority for first releases)
 
@@ -10,7 +10,7 @@ Initially developed to work with `coog-api`, it should be suitable for any REST 
 
 Our first internal need was to import massively a set of contracts to Coog platform
 
-- data is in `JSON` format
+- Data is in `JSON` format
 - Coog API ensure all kind of checks on imported data (format, consistency, rates, etc.)
 - Coog API contract entrypoint is unitary and not intended manage piping or scheduling
 - Serializing calls is not performant and needs scripting
@@ -19,22 +19,30 @@ Even if it looks simple, these tasks usually turns into messy development projec
 
 `api-load` has been created to fix that, with focus on
 
-- performance
-- robustness (long process for migration)
-- clean reporting
+- Performance
+- Robustness (long process for migration)
+- Clean reporting
 
 ### Features
 
-- configurable concurrency
-- managed authentication (only cookie for now)
-- multi-platform and portability (Go)
+- Configurable concurrency
+- Managed authentication (only cookie for now)
+- Multi-platform and portability (Go)
 
-### Installation and usage
+**Public API will be frozen soon for v1.0.0.**
 
-- Grab a binary from [here](https://github.com/coopengo/api-load/releases)
-- copy it to somewhere in your `PATH`
+### Installation
 
-#### example of usage
+`api-load` is a standalone binary
+
+- Install: copy the binary somewhere in your `PATH`
+- Uninstall: remove the binary
+
+Binaries are hosted [here](https://github.com/coopengo/api-load/releases)
+
+For Gophers, just `go get github.com/coopengo/api-load`
+
+### Usage example
 
 - Supposing that `coog-api` is running at `http://localhost:3000`
 - Prepare your data file (`data.json`)
@@ -44,10 +52,16 @@ Even if it looks simple, these tasks usually turns into messy development projec
         {"name": "company2"}
     ]
     ```
-- `api-load -url "http://localhost:3000/party/company" -data data.json`
+- Launch data loading
+    ```
+    api-load \
+        -auth "cookie <username>:<password>@http://localhost:3000/auth/login" \
+        -url "http://localhost:3000/party/company" \
+        -data data.json
+    ```
 
 ### TODO (urgent first)
 
-- check cookies (passed by reference, go concurrency?)
-- make auth more generic
-- better logs and result (average call, stats, etc.)
+- [ ] Some cleaning (Check Go concurrency on cookies, set url and method on job model)
+- [ ] Make auth more generic (the way we format username, password, other methods)
+- [ ] Better logs and result (average call, stats, API errors)
