@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
+	"time"
 )
 
 var (
@@ -23,46 +25,67 @@ func main() {
 	auth := flag.String("auth", "cookie admin:admin@http://localhost:3000/auth/login", "api auth method")
 	url := flag.String("url", "http://localhost:3000/contract", "api url")
 	method := flag.String("method", "POST", "http method to process to api")
-	data := flag.String("data", "", "data file to process")
 
 	// tech args
 	concurrency := flag.Uint("c", 4, "number of concurrent requests")
 	buffer := flag.Uint("b", 10, "buffer / channel size")
 
 	flag.Parse()
+	path := flag.Arg(0)
 
 	if *v {
 		version()
 		return
 	}
 
-	if *data == "" {
+	if path == "" {
 		flag.Usage()
 		return
 	}
 
-	temp := &job{}
-	authenticate(*auth, temp)
+	tpl := &job{
+		url:    *url,
+		method: *method,
+	}
+	authenticate(*auth, tpl)
 
-	in := make(chan job, *buffer**concurrency)
-	out := make(chan job, *buffer**concurrency)
+	todo := make(chan job, *buffer**concurrency)
+	done := make(chan job, *buffer**concurrency)
 
 	for i := uint(0); i < *concurrency; i++ {
-		go worker(in, out)
+		go worker(todo, done)
 	}
 
-	go prepare(in, temp, *url, *method, *data)
+	go prepare(todo, tpl, path)
 
-	done := uint(0)
+	wDone := uint(0)
+	count, ok, ko := 0, 0, 0
+	var dmin, dmax, sum time.Duration
 	for {
-		r := <-out
-		if r.id == 0 {
-			done++
-			if done == *concurrency {
+		j := <-done
+		if j.id == 0 {
+			wDone++
+			if wDone == *concurrency {
+				close(done)
 				break
 			}
 		} else {
-			fmt.Println(&r)
+			if j.Ok() {
+				ok++
+			} else {
+				ko++
+				fmt.Fprintln(os.Stderr, &j)
+			}
+			count++
+			sum += j.d
+			if j.d > dmax {
+				dmax = j.d
+			}
+			if dmin == 0 || j.d < dmin {
+				dmin = j.d
+			}
 		}
+		fmt.Printf("\r%d Succeeded - %d Failed", ok, ko)
 	}
+	fmt.Printf("\nmin: %v - max: %s - avg: %v\n", dmin, dmax, sum/time.Duration(count))
 }

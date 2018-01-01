@@ -57,11 +57,12 @@ For Gophers, just `go get github.com/coopengo/api-load`
     api-load \
         -auth "cookie <username>:<password>@http://localhost:3000/auth/login" \
         -url "http://localhost:3000/party/company" \
-        -data data.json
+        data.json
     ```
 
 ### TODO (urgent first)
 
-- [ ] Some cleaning (Check Go concurrency on cookies, set url and method on job model)
+- [X] Some cleaning (Check Go concurrency on cookies, set url and method on job model)
+- [X] Scalability (support huge file size)
+- [X] Better logs and result (average call, stats, API errors)
 - [ ] Make auth more generic (the way we format username, password, other methods)
-- [ ] Better logs and result (average call, stats, API errors)

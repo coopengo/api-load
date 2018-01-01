@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strings"
@@ -30,9 +31,18 @@ func authenticate(conf string, j *job) {
 	if err != nil {
 		panic(err)
 	}
-	res, err := http.Post(match[3], "application/json", bytes.NewReader(b))
+	resp, err := http.Post(match[3], "application/json", bytes.NewReader(b))
 	if err != nil {
 		panic(err)
 	}
-	j.cookies = res.Cookies()
+	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusPartialContent {
+		b, err := ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			panic(fmt.Errorf("auth error: %s\n%v", resp.Status, err))
+		} else {
+			panic(fmt.Errorf("auth error: %s\n%s", resp.Status, string(b)))
+		}
+	}
+	j.cookies = resp.Cookies()
 }
