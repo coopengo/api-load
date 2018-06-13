@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io/ioutil"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -15,6 +16,9 @@ func do(j job, out chan<- job) {
 	}()
 	req, err := http.NewRequest(j.method, j.url, bytes.NewReader(j.in))
 	req.Header.Add("Content-Type", "application/json")
+	for _, header := range j.headers {
+		req.Header.Add(header[0], header[1])
+	}
 	for _, cookie := range j.cookies {
 		req.AddCookie(cookie)
 	}
@@ -38,9 +42,9 @@ func do(j job, out chan<- job) {
 	j.out = b
 }
 
-func worker(in <-chan job, out chan<- job) {
+func worker(in <-chan job, out chan<- job, wg *sync.WaitGroup) {
 	for j := range in {
 		do(j, out)
 	}
-	out <- job{}
+	wg.Done()
 }

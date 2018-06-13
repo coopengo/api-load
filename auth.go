@@ -17,32 +17,44 @@ type login struct {
 	Password string `json:"password"`
 }
 
-func authenticate(conf string, j *job) {
-	if !strings.HasPrefix(conf, "cookie ") {
-		panic(fmt.Errorf("auth configuration not supported: %s", conf))
-	}
-	conf = conf[len("cookie "):]
+func authenticateWithCookie(conf string, j *job) error {
 	match := confRegExp.FindStringSubmatch(conf)
 	if match == nil {
-		panic(fmt.Errorf("conf format refused: %s", conf))
+		return fmt.Errorf("conf format refused: %s", conf)
 	}
 	l := login{match[1], match[2]}
 	b, err := json.Marshal(l)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	resp, err := http.Post(match[3], "application/json", bytes.NewReader(b))
 	if err != nil {
-		panic(err)
+		return err
 	}
 	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusPartialContent {
 		b, err := ioutil.ReadAll(resp.Body)
 		resp.Body.Close()
 		if err != nil {
-			panic(fmt.Errorf("auth error: %s\n%v", resp.Status, err))
-		} else {
-			panic(fmt.Errorf("auth error: %s\n%s", resp.Status, string(b)))
+			return fmt.Errorf("auth error: %s\n%v", resp.Status, err)
 		}
+		return fmt.Errorf("auth error: %s\n%s", resp.Status, string(b))
 	}
 	j.cookies = resp.Cookies()
+	return nil
+}
+
+func authenticateWithToken(conf string, j *job) error {
+	token := strings.Trim(conf, " ")
+	j.headers = append(j.headers, [2]string{"Authorization", "Bearer " + token})
+	return nil
+}
+
+func authenticate(conf string, j *job) error {
+	if strings.HasPrefix(conf, "cookie ") {
+		return authenticateWithCookie(conf[len("cookie "):], j)
+	}
+	if strings.HasPrefix(conf, "token ") {
+		return authenticateWithToken(conf[len("token "):], j)
+	}
+	return fmt.Errorf("auth configuration not supported: %s", conf)
 }

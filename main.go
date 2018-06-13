@@ -3,8 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os"
-	"time"
+	"sync"
 )
 
 var (
@@ -44,48 +43,36 @@ func main() {
 	}
 
 	tpl := &job{
-		url:    *url,
-		method: *method,
+		url:     *url,
+		method:  *method,
+		headers: make([][2]string, 0, 1),
 	}
-	authenticate(*auth, tpl)
+	if err := authenticate(*auth, tpl); err != nil {
+		panic(err)
+	}
 
+	errC := make(chan error, 1)
 	todo := make(chan job, *buffer**concurrency)
 	done := make(chan job, *buffer**concurrency)
+	var workersWG sync.WaitGroup
 
 	for i := uint(0); i < *concurrency; i++ {
-		go worker(todo, done)
+		workersWG.Add(1)
+		go worker(todo, done, &workersWG)
 	}
 
-	go prepare(todo, tpl, path)
+	go prepare(todo, errC, tpl, path)
 
-	wDone := uint(0)
-	count, ok, ko := 0, 0, 0
-	var dmin, dmax, sum time.Duration
-	for {
-		j := <-done
-		if j.id == 0 {
-			wDone++
-			if wDone == *concurrency {
-				close(done)
-				break
-			}
-		} else {
-			if j.Ok() {
-				ok++
-			} else {
-				ko++
-				fmt.Fprintln(os.Stderr, &j)
-			}
-			count++
-			sum += j.d
-			if j.d > dmax {
-				dmax = j.d
-			}
-			if dmin == 0 || j.d < dmin {
-				dmin = j.d
-			}
-		}
-		fmt.Printf("\r%d Succeeded - %d Failed", ok, ko)
-	}
-	fmt.Printf("\nmin: %v - max: %s - avg: %v\n", dmin, dmax, sum/time.Duration(count))
+	go func() {
+		err := <-errC
+		panic(err)
+	}()
+
+	var loggerWG sync.WaitGroup
+	loggerWG.Add(1)
+	go log(done, &loggerWG)
+
+	workersWG.Wait()
+	close(done)
+	loggerWG.Wait()
 }

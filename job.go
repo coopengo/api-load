@@ -11,6 +11,7 @@ type job struct {
 	url     string
 	method  string
 	err     string
+	headers [][2]string
 	cookies []*http.Cookie
 	in      []byte
 	out     []byte
