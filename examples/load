@@ -1,0 +1,3 @@
+#!/bin/bash
+
+../api-load -url "http://localhost:3000/party/company" data.json

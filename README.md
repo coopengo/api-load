@@ -65,4 +65,4 @@ For Gophers, just `go get github.com/coopengo/api-load`
 - [X] Some cleaning (Check Go concurrency on cookies, set url and method on job model)
 - [X] Scalability (support huge file size)
 - [X] Better logs and result (average call, stats, API errors)
-- [ ] Make auth more generic (the way we format username, password, other methods)
+- [X] Make auth more generic (the way we format username, password, other methods)
